@@ -413,11 +413,6 @@ public:
     virtual void fd() { cout << "VDerived::fd" << endl; }
 };
 /*
-出现虚拟继承时，虚表中多了一个字段：vcall offset / vbase offset
-vcall offset全称为(virtual call offset), 也即 虚拟调用偏移。当一个class存在虚基类时，gcc编译器便会在vtable中
-安插相应的vcall offset。 它的意思是虚基类相对于当前this指针的偏移，针对在虚基类或者虚基类的基类中声明的
-virtual function，为了通过虚基类调用virtual function所执行的this指针调整。
-
 在菱形虚拟继承中，除了虚表外，还新增了 两个construction vtable和一个VTT；
     construction vtable 是在构造父类子对象的时候用的
     VTT 的意思是virtual table table，意思是虚表的表，里面存的是虚表的入口地址
@@ -465,7 +460,7 @@ vtable for 'Base' @ 0x555555558b00 (subobject @ 0x7fffffffdba0):
 [4]: 0x5555555565d8 <Base::h()>
 
 vtable for VDerived:
-        .quad   32 -> vcall offset / vbase offset
+        .quad   32 -> vbase offset
         .quad   0 -> offset to top
         .quad   typeinfo for VDerived
         .quad   VDerived::~VDerived() [complete object destructor]
@@ -482,7 +477,7 @@ vtable for VDerived:
         .quad   non-virtual thunk to VDerived::f()
         .quad   VBase2::f2()
         .quad   0
-        .quad   -32
+        .quad   -32 -> vcall offset
         .quad   -32
         .quad   -32
         .quad   -32
@@ -494,7 +489,23 @@ vtable for VDerived:
         .quad   Base::h()
 
 可见：
-    在内存布局中，先是第一个继承的父类，然后是其他父类，然后是派生类，最后是超类，
+    在内存布局中，先是第一个继承的父类，然后是其他父类，然后是派生类，最后是超类
+
+vcall offset
+    vcall offset全称为(virtual call offset), 也即虚拟调用偏移。当一个class存在虚基类，并且虚基类的虚函数
+    被重载时，gcc编译器便会在vtable中安插相应的vcall offset。 其主要用于：
+    针对在虚基类或者虚基类的基类中声明的virtual function，为了通过虚基类指针调用virtual function，
+    需要对this指针做出的调整
+vbase offset
+    vbase offset全称为(Virtual Base offsets), 也即虚基类偏移。当一个class存在虚基类时，gcc编译器便会在
+    primary virtual table中安插相应的vbase offset。 其主要作用为访问对象的虚基类子对象。
+    这样的条目被添加到派生类对象vtable，以获取虚拟基类子对象的地址。每个虚基类都需要这样一个条目。
+    这些值可以是正的，也可以是负的。
+top offset
+    top offset ，也即到class顶部的偏移，指的该class的vptr到对象顶部的位移，其类型为 ptrdiff_t，
+    它总是存在。偏移量提供了一种使用vptr从任何基类对象中查找对象顶部的方式，
+    这对于 dynamic_cast<void*> 尤其必要。
+
 */
 #pragma endregion
 
