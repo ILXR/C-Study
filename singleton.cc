@@ -53,12 +53,11 @@ NormalLazy *NormalLazy::instance = nullptr;
  *      使用独占式智能指针std::unique_ptr;
  *      使用静态的嵌套类对象；
  */
-
 // 使用智能指针
 class LazyUnique
 {
 public:
-    LazyUnique *getInstance()
+    static LazyUnique *getInstance()
     {
         if (instance.get() == nullptr)
         {
@@ -87,7 +86,7 @@ unique_ptr<LazyUnique> LazyUnique::instance{nullptr};
 class LazyEmbeded
 {
 public:
-    LazyEmbeded *getInstance()
+    static LazyEmbeded *getInstance()
     {
         if (instance == nullptr)
         {
